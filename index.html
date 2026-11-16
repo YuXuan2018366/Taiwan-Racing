@@ -1,0 +1,735 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#092e38">
+  <title>Taiwan Racing — Island Highway</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      background: #092e38;
+      color: #f7f6e8;
+      font-synthesis: none;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      padding: 28px 18px;
+      display: grid;
+      place-items: center;
+      background:
+        radial-gradient(ellipse at 50% 0%, #1c5860 0, transparent 56%),
+        linear-gradient(160deg, #0d3940, #08252d 75%);
+    }
+
+    .game {
+      width: min(100%, 980px);
+    }
+
+    .topbar {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 16px;
+      margin: 0 4px 14px;
+    }
+
+    .eyebrow {
+      margin: 0 0 5px;
+      color: #f6bf66;
+      font-size: .72rem;
+      font-weight: 800;
+      letter-spacing: .2em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.55rem, 5vw, 2.4rem);
+      letter-spacing: -.045em;
+      line-height: 1;
+    }
+
+    h1 span { color: #f6bf66; }
+
+    .route {
+      color: #bdd2c9;
+      font-size: .88rem;
+      font-weight: 700;
+      text-align: right;
+    }
+
+    .cabinet {
+      overflow: hidden;
+      border: 1px solid #5c827c;
+      border-radius: 18px;
+      background: #173c3d;
+      box-shadow: 0 24px 70px #04171bc9, 0 0 0 5px #f7f6e80b;
+    }
+
+    .hud {
+      min-height: 64px;
+      padding: 10px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      background: #12363a;
+      border-bottom: 1px solid #ffffff1a;
+    }
+
+    .stats {
+      display: flex;
+      align-items: center;
+      gap: clamp(12px, 4vw, 30px);
+    }
+
+    .stat-label {
+      display: block;
+      margin-bottom: 2px;
+      color: #a9c5ba;
+      font-size: .62rem;
+      font-weight: 800;
+      letter-spacing: .13em;
+      text-transform: uppercase;
+    }
+
+    .stat-value {
+      font-size: 1.05rem;
+      font-weight: 900;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .hearts { color: #ff8b79; letter-spacing: .08em; }
+    .tea-count { color: #f6bf66; }
+
+    #pauseButton {
+      min-width: 76px;
+      padding: 8px 12px;
+      border: 1px solid #73938b;
+      border-radius: 9px;
+      background: #20494a;
+      color: #f7f6e8;
+      font: inherit;
+      font-size: .82rem;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    #pauseButton:disabled { opacity: .45; cursor: default; }
+
+    .scene {
+      position: relative;
+      background: #76b58b;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      aspect-ratio: 900 / 560;
+      touch-action: none;
+    }
+
+    .overlay {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding: 18px;
+      background: #07252eb3;
+      backdrop-filter: blur(4px);
+      text-align: center;
+    }
+
+    .overlay[hidden] { display: none; }
+
+    .card {
+      width: min(100%, 430px);
+      padding: clamp(20px, 5vw, 34px);
+      border: 1px solid #ffffff45;
+      border-radius: 18px;
+      background: linear-gradient(145deg, #174548f2, #0b3038f5);
+      box-shadow: 0 16px 48px #03161c88;
+    }
+
+    .card .badge {
+      display: inline-block;
+      margin-bottom: 10px;
+      padding: 5px 9px;
+      border-radius: 999px;
+      background: #f6bf6624;
+      color: #ffd27b;
+      font-size: .68rem;
+      font-weight: 900;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+
+    .card h2 {
+      margin: 0 0 9px;
+      font-size: clamp(1.55rem, 6vw, 2.15rem);
+    }
+
+    .card p {
+      margin: 0 auto 18px;
+      color: #d3e2d8;
+      line-height: 1.55;
+    }
+
+    .primary {
+      min-width: 175px;
+      padding: 12px 20px;
+      border: 0;
+      border-radius: 10px;
+      background: #f6bf66;
+      color: #263a30;
+      font: inherit;
+      font-weight: 900;
+      box-shadow: 0 4px 0 #c88d3b;
+      cursor: pointer;
+    }
+
+    .primary:hover { background: #ffd27b; transform: translateY(-1px); }
+    .primary:active { transform: translateY(2px); box-shadow: 0 2px 0 #c88d3b; }
+
+    .controls {
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      color: #c5d9ce;
+      font-size: .78rem;
+    }
+
+    .key {
+      display: inline-block;
+      min-width: 24px;
+      margin: 0 2px;
+      padding: 3px 6px;
+      border: 1px solid #76968c;
+      border-radius: 5px;
+      color: #fff7df;
+      font-weight: 800;
+      text-align: center;
+    }
+
+    .touch-controls { display: none; gap: 10px; }
+
+    .touch-controls button {
+      width: 54px;
+      height: 42px;
+      border: 1px solid #73938b;
+      border-radius: 9px;
+      background: #20494a;
+      color: white;
+      font-size: 1.25rem;
+      touch-action: manipulation;
+    }
+
+    .note {
+      margin: 11px 4px 0;
+      color: #a9c5ba;
+      font-size: .75rem;
+      text-align: center;
+    }
+
+    @media (max-width: 600px) {
+      body { padding: 16px 10px; }
+      .topbar { align-items: start; }
+      .route { max-width: 120px; font-size: .75rem; }
+      .hud { min-height: 58px; padding: 8px 11px; }
+      .stat-label { font-size: .55rem; }
+      .stat-value { font-size: .95rem; }
+      #pauseButton { min-width: 62px; padding: 7px 8px; }
+      .controls { padding: 10px; font-size: .7rem; }
+      .touch-controls { display: flex; }
+    }
+  </style>
+</head>
+<body>
+  <main class="game">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Island Highway • Arcade Racer</p>
+        <h1>TAIWAN <span>RACING</span></h1>
+      </div>
+      <div class="route">NORTH TO SOUTH<br>TAIPEI → KAOHSIUNG</div>
+    </header>
+
+    <section class="cabinet" aria-label="Taiwan Racing game">
+      <div class="hud" aria-live="polite">
+        <div class="stats">
+          <div><span class="stat-label">Distance</span><span class="stat-value" id="score">0 km</span></div>
+          <div><span class="stat-label">Best</span><span class="stat-value" id="best">0 km</span></div>
+          <div><span class="stat-label">Bubble tea</span><span class="stat-value tea-count" id="tea">0</span></div>
+          <div><span class="stat-label">Bumpers</span><span class="stat-value hearts" id="lives">♥♥♥</span></div>
+        </div>
+        <button id="pauseButton" type="button" disabled>Pause</button>
+      </div>
+      <div class="scene">
+        <canvas id="gameCanvas" width="900" height="560" aria-label="Three-lane highway. Dodge traffic and collect bubble tea."></canvas>
+        <div class="overlay" id="overlay">
+          <div class="card">
+            <span class="badge" id="overlayBadge">Ready, driver?</span>
+            <h2 id="overlayTitle">The island is yours.</h2>
+            <p id="overlayText">Cruise through Taiwan, dodge the traffic, and grab bubble tea for bonus points. You have three bumpers!</p>
+            <button class="primary" id="startButton" type="button">Start your engine</button>
+          </div>
+        </div>
+      </div>
+      <div class="controls">
+        <div><span class="key">←</span><span class="key">→</span> or <span class="key">A</span><span class="key">D</span> to steer <span class="key">Space</span> to pause</div>
+        <div class="touch-controls" aria-label="Touch driving controls">
+          <button type="button" id="leftButton" aria-label="Steer left">←</button>
+          <button type="button" id="rightButton" aria-label="Steer right">→</button>
+        </div>
+      </div>
+    </section>
+    <p class="note">A little scenic drive from Taipei to Kaohsiung. Made for keyboard and touch.</p>
+  </main>
+
+  <script>
+    (() => {
+      const canvas = document.getElementById("gameCanvas");
+      const ctx = canvas.getContext("2d");
+      const overlay = document.getElementById("overlay");
+      const overlayBadge = document.getElementById("overlayBadge");
+      const overlayTitle = document.getElementById("overlayTitle");
+      const overlayText = document.getElementById("overlayText");
+      const startButton = document.getElementById("startButton");
+      const pauseButton = document.getElementById("pauseButton");
+      const scoreDisplay = document.getElementById("score");
+      const bestDisplay = document.getElementById("best");
+      const teaDisplay = document.getElementById("tea");
+      const livesDisplay = document.getElementById("lives");
+
+      const W = 900;
+      const H = 560;
+      const playerY = 455;
+      const laneCount = 3;
+      const laneLines = [1 / 3, 2 / 3];
+      const carColors = ["#ed7165", "#55b7bf", "#f0b84c", "#b58ed4", "#e7ece1"];
+      const destinations = ["TAOYUAN", "HSINCHU", "TAICHUNG", "CHIAYI", "TAINAN", "KAOHSIUNG"];
+
+      let state = "ready";
+      let playerLane = 1;
+      let objects = [];
+      let score = 0;
+      let tea = 0;
+      let lives = 3;
+      let speed = 230;
+      let spawnTimer = 0;
+      let roadOffset = 0;
+      let sceneryOffset = 0;
+      let signTimer = 2.2;
+      let signIndex = 0;
+      let lastTime = 0;
+      let shake = 0;
+      let best = 0;
+
+      try {
+        best = Number(localStorage.getItem("taiwanRacingBest")) || 0;
+      } catch (error) {
+        best = 0;
+      }
+
+      const lerp = (a, b, t) => a + (b - a) * t;
+      const roadEdges = (y) => {
+        const t = Math.max(0, Math.min(1, y / H));
+        return {
+          left: lerp(280, 190, t),
+          right: lerp(620, 710, t)
+        };
+      };
+      const laneX = (lane, y) => {
+        const edges = roadEdges(y);
+        return lerp(edges.left, edges.right, (lane + 0.5) / laneCount);
+      };
+
+      function updateHud() {
+        scoreDisplay.textContent = `${Math.floor(score)} km`;
+        bestDisplay.textContent = `${best} km`;
+        teaDisplay.textContent = String(tea);
+        livesDisplay.textContent = "♥".repeat(lives) + "♡".repeat(3 - lives);
+      }
+
+      function startGame() {
+        state = "playing";
+        playerLane = 1;
+        objects = [];
+        score = 0;
+        tea = 0;
+        lives = 3;
+        speed = 230;
+        spawnTimer = 0.8;
+        roadOffset = 0;
+        sceneryOffset = 0;
+        signTimer = 2.2;
+        signIndex = 0;
+        shake = 0;
+        overlay.hidden = true;
+        pauseButton.disabled = false;
+        pauseButton.textContent = "Pause";
+        updateHud();
+      }
+
+      function pauseGame() {
+        if (state === "playing") {
+          state = "paused";
+          showOverlay("Pit stop", "Take a breather.", "Your drive is paused. The highway will be right here when you’re ready.", "Keep driving");
+          pauseButton.textContent = "Resume";
+        } else if (state === "paused") {
+          state = "playing";
+          overlay.hidden = true;
+          pauseButton.textContent = "Pause";
+        }
+      }
+
+      function showOverlay(badge, title, text, button) {
+        overlayBadge.textContent = badge;
+        overlayTitle.textContent = title;
+        overlayText.textContent = text;
+        startButton.textContent = button;
+        overlay.hidden = false;
+      }
+
+      function endGame() {
+        state = "over";
+        pauseButton.disabled = true;
+        if (Math.floor(score) > best) {
+          best = Math.floor(score);
+          try {
+            localStorage.setItem("taiwanRacingBest", String(best));
+          } catch (error) {
+            // The score still works if browser storage is unavailable.
+          }
+        }
+        updateHud();
+        showOverlay("Drive complete", `${Math.floor(score)} km down!`, `You collected ${tea} bubble tea${tea === 1 ? "" : "s"}. Fancy another run down the island?`, "Race again");
+      }
+
+      function movePlayer(direction) {
+        if (state !== "playing") return;
+        playerLane = Math.max(0, Math.min(laneCount - 1, playerLane + direction));
+      }
+
+      function spawnObject() {
+        const lane = Math.floor(Math.random() * laneCount);
+        const isTea = Math.random() < 0.23;
+        const sameLaneAhead = objects.some((object) => object.lane === lane && object.y < 20);
+        if (sameLaneAhead) return;
+        objects.push({
+          lane,
+          y: -65,
+          type: isTea ? "tea" : "car",
+          color: carColors[Math.floor(Math.random() * carColors.length)],
+          hit: false,
+          collected: false
+        });
+      }
+
+      function update(dt) {
+        if (state !== "playing") return;
+        speed = Math.min(430, speed + dt * 3.2);
+        score += dt * speed * 0.035;
+        roadOffset = (roadOffset + speed * dt) % 120;
+        sceneryOffset = (sceneryOffset + speed * dt * 0.6) % 200;
+        signTimer -= dt;
+        if (signTimer <= 0) {
+          signIndex = (signIndex + 1) % destinations.length;
+          signTimer = 5.4;
+        }
+        spawnTimer -= dt;
+        if (spawnTimer <= 0) {
+          spawnObject();
+          spawnTimer = Math.max(0.52, 1.15 - (speed - 230) / 700) + Math.random() * 0.35;
+        }
+
+        for (const object of objects) {
+          object.y += speed * dt;
+          if (object.type === "tea" && !object.collected && object.lane === playerLane && Math.abs(object.y - playerY) < 38) {
+            object.collected = true;
+            tea += 1;
+            score += 12;
+          } else if (object.type === "car" && !object.hit && object.lane === playerLane && Math.abs(object.y - playerY) < 46) {
+            object.hit = true;
+            lives -= 1;
+            shake = 0.25;
+            if (lives <= 0) {
+              endGame();
+              break;
+            }
+          }
+        }
+        objects = objects.filter((object) => object.y < H + 80 && !object.collected);
+        shake = Math.max(0, shake - dt);
+        updateHud();
+      }
+
+      function roundedRect(x, y, width, height, radius) {
+        ctx.beginPath();
+        ctx.roundRect(x, y, width, height, radius);
+        ctx.fill();
+      }
+
+      function drawBackground() {
+        const sky = ctx.createLinearGradient(0, 0, 0, H * 0.62);
+        sky.addColorStop(0, "#83c6d0");
+        sky.addColorStop(1, "#e8d39a");
+        ctx.fillStyle = sky;
+        ctx.fillRect(0, 0, W, H);
+
+        ctx.fillStyle = "#ffda85";
+        ctx.beginPath();
+        ctx.arc(735, 82, 37, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = "#699c84";
+        ctx.beginPath();
+        ctx.moveTo(0, 240);
+        ctx.lineTo(120, 115);
+        ctx.lineTo(230, 215);
+        ctx.lineTo(350, 115);
+        ctx.lineTo(490, 230);
+        ctx.lineTo(650, 108);
+        ctx.lineTo(900, 235);
+        ctx.lineTo(900, 340);
+        ctx.lineTo(0, 340);
+        ctx.fill();
+
+        ctx.fillStyle = "#477e72";
+        ctx.beginPath();
+        ctx.moveTo(0, 290);
+        ctx.lineTo(175, 172);
+        ctx.lineTo(310, 278);
+        ctx.lineTo(470, 160);
+        ctx.lineTo(640, 292);
+        ctx.lineTo(810, 190);
+        ctx.lineTo(900, 250);
+        ctx.lineTo(900, 385);
+        ctx.lineTo(0, 385);
+        ctx.fill();
+
+        ctx.fillStyle = "#73aa79";
+        ctx.fillRect(0, 300, W, H - 300);
+        for (let y = -200 + sceneryOffset; y < H + 180; y += 200) {
+          drawTree(roadEdges(y + 45).left - 70, y + 34, 0.75);
+          drawTree(roadEdges(y + 132).right + 58, y + 121, 0.9);
+          drawTree(roadEdges(y + 15).left - 142, y + 10, 0.55);
+          drawTree(roadEdges(y + 168).right + 137, y + 163, 0.6);
+        }
+      }
+
+      function drawTree(x, y, size) {
+        ctx.fillStyle = "#77523b";
+        ctx.fillRect(x - 4 * size, y, 8 * size, 22 * size);
+        ctx.fillStyle = "#236b54";
+        ctx.beginPath();
+        ctx.arc(x, y - 6 * size, 16 * size, 0, Math.PI * 2);
+        ctx.arc(x - 11 * size, y + 1 * size, 11 * size, 0, Math.PI * 2);
+        ctx.arc(x + 11 * size, y + 1 * size, 11 * size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "#43895f";
+        ctx.beginPath();
+        ctx.arc(x - 5 * size, y - 11 * size, 6 * size, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      function drawRoad() {
+        const top = roadEdges(0);
+        const bottom = roadEdges(H);
+        ctx.fillStyle = "#c5b690";
+        ctx.beginPath();
+        ctx.moveTo(top.left - 10, 0);
+        ctx.lineTo(top.right + 10, 0);
+        ctx.lineTo(bottom.right + 10, H);
+        ctx.lineTo(bottom.left - 10, H);
+        ctx.closePath();
+        ctx.fill();
+
+        const asphalt = ctx.createLinearGradient(0, 0, 0, H);
+        asphalt.addColorStop(0, "#505c5b");
+        asphalt.addColorStop(1, "#303c3d");
+        ctx.fillStyle = asphalt;
+        ctx.beginPath();
+        ctx.moveTo(top.left, 0);
+        ctx.lineTo(top.right, 0);
+        ctx.lineTo(bottom.right, H);
+        ctx.lineTo(bottom.left, H);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.strokeStyle = "#fff1bd";
+        ctx.lineWidth = 5;
+        ctx.beginPath();
+        ctx.moveTo(top.left + 2, 0);
+        ctx.lineTo(bottom.left + 2, H);
+        ctx.moveTo(top.right - 2, 0);
+        ctx.lineTo(bottom.right - 2, H);
+        ctx.stroke();
+
+        ctx.strokeStyle = "#e9e3ca";
+        ctx.lineWidth = 3;
+        ctx.setLineDash([25, 23]);
+        ctx.lineDashOffset = -roadOffset;
+        for (const fraction of laneLines) {
+          ctx.beginPath();
+          ctx.moveTo(lerp(top.left, top.right, fraction), 0);
+          ctx.lineTo(lerp(bottom.left, bottom.right, fraction), H);
+          ctx.stroke();
+        }
+        ctx.setLineDash([]);
+
+        drawRoadSign();
+      }
+
+      function drawRoadSign() {
+        const signX = 790;
+        ctx.fillStyle = "#77523b";
+        ctx.fillRect(signX, 126, 6, 82);
+        ctx.fillStyle = "#17664e";
+        roundedRect(signX - 56, 100, 120, 42, 7);
+        ctx.strokeStyle = "#f4d790";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(signX - 56, 100, 120, 42);
+        ctx.fillStyle = "#fff4d7";
+        ctx.textAlign = "center";
+        ctx.font = "bold 13px Trebuchet MS, sans-serif";
+        ctx.fillText(destinations[signIndex], signX + 4, 117);
+        ctx.font = "11px Trebuchet MS, sans-serif";
+        ctx.fillText("↓  12 km", signX + 4, 133);
+      }
+
+      function drawCar(x, y, color, isPlayer) {
+        const width = isPlayer ? 54 : 48;
+        const height = isPlayer ? 86 : 76;
+        ctx.save();
+        ctx.translate(x, y);
+
+        ctx.fillStyle = "#15282b";
+        roundedRect(-width / 2 - 5, -height / 2 + 11, 10, 20, 4);
+        roundedRect(width / 2 - 5, -height / 2 + 11, 10, 20, 4);
+        roundedRect(-width / 2 - 5, height / 2 - 31, 10, 20, 4);
+        roundedRect(width / 2 - 5, height / 2 - 31, 10, 20, 4);
+
+        ctx.fillStyle = color;
+        roundedRect(-width / 2, -height / 2, width, height, 12);
+
+        ctx.fillStyle = isPlayer ? "#e5f5e9" : "#c7e1df";
+        ctx.beginPath();
+        ctx.moveTo(-width * 0.34, -height * 0.12);
+        ctx.lineTo(-width * 0.26, -height * 0.34);
+        ctx.quadraticCurveTo(0, -height * 0.42, width * 0.26, -height * 0.34);
+        ctx.lineTo(width * 0.34, -height * 0.12);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = isPlayer ? "#39777b" : "#496c70";
+        ctx.beginPath();
+        ctx.moveTo(-width * 0.29, -height * 0.13);
+        ctx.lineTo(-width * 0.22, -height * 0.3);
+        ctx.quadraticCurveTo(0, -height * 0.36, width * 0.22, -height * 0.3);
+        ctx.lineTo(width * 0.29, -height * 0.13);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = isPlayer ? "#ffefad" : "#ff7167";
+        ctx.fillRect(-width * 0.34, height * 0.35, width * 0.2, 5);
+        ctx.fillRect(width * 0.14, height * 0.35, width * 0.2, 5);
+        if (isPlayer) {
+          ctx.fillStyle = "#f8d275";
+          roundedRect(-14, 3, 28, 12, 4);
+          ctx.fillStyle = "#284446";
+          ctx.font = "bold 8px Trebuchet MS, sans-serif";
+          ctx.textAlign = "center";
+          ctx.fillText("TW", 0, 12);
+        }
+        ctx.restore();
+      }
+
+      function drawTea(x, y) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.fillStyle = "#102f31aa";
+        ctx.beginPath();
+        ctx.ellipse(0, 24, 21, 8, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "#f6bf66";
+        ctx.beginPath();
+        ctx.moveTo(-14, -15);
+        ctx.lineTo(14, -15);
+        ctx.lineTo(10, 17);
+        ctx.quadraticCurveTo(0, 22, -10, 17);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = "#fff3d4";
+        ctx.fillRect(-15, -19, 30, 5);
+        ctx.strokeStyle = "#fff3d4";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(2, -20);
+        ctx.lineTo(8, -31);
+        ctx.stroke();
+        ctx.fillStyle = "#75452e";
+        for (const [bx, by] of [[-5, 7], [3, 12], [7, 3], [-2, 14]]) {
+          ctx.beginPath();
+          ctx.arc(bx, by, 2, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+
+      function draw() {
+        ctx.save();
+        if (shake > 0) {
+          ctx.translate((Math.random() - 0.5) * 8, (Math.random() - 0.5) * 6);
+        }
+        drawBackground();
+        drawRoad();
+
+        for (const object of objects) {
+          const x = laneX(object.lane, object.y);
+          if (object.type === "tea") drawTea(x, object.y);
+          else drawCar(x, object.y, object.color, false);
+        }
+        drawCar(laneX(playerLane, playerY), playerY, "#dc6958", true);
+        ctx.restore();
+      }
+
+      function frame(time) {
+        const dt = Math.min((time - lastTime) / 1000 || 0, 0.04);
+        lastTime = time;
+        update(dt);
+        draw();
+        requestAnimationFrame(frame);
+      }
+
+      startButton.addEventListener("click", () => {
+        if (state === "paused") pauseGame();
+        else startGame();
+      });
+      pauseButton.addEventListener("click", pauseGame);
+      document.getElementById("leftButton").addEventListener("pointerdown", () => movePlayer(-1));
+      document.getElementById("rightButton").addEventListener("pointerdown", () => movePlayer(1));
+
+      document.addEventListener("keydown", (event) => {
+        if (["ArrowLeft", "ArrowRight", " ", "a", "A", "d", "D"].includes(event.key)) event.preventDefault();
+        if (event.repeat) return;
+        if (event.key === "ArrowLeft" || event.key.toLowerCase() === "a") movePlayer(-1);
+        if (event.key === "ArrowRight" || event.key.toLowerCase() === "d") movePlayer(1);
+        if (event.key === " " && (state === "playing" || state === "paused")) pauseGame();
+        if (event.key === "Enter" && (state === "ready" || state === "over")) startGame();
+      });
+
+      updateHud();
+      requestAnimationFrame(frame);
+    })();
+  </script>
+</body>
+</html>
